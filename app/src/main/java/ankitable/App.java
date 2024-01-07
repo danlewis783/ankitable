@@ -63,44 +63,55 @@ public class App {
             System.err.println(
                     "usage: AnkiTable path/to/file.csv path/to/outputFile.html\n" +
                     "                --OR--\n" +
-                    "       AnkiTable -batch directory/containing/csvfiles");
+                    "       AnkiTable -batch directory/containing/csvfiles -output directory/to/save/html/files");
             return;
         }
         System.out.println(Arrays.toString(args));
         if (args[0].equals("-batch")) {
-            batch(args[1]);
+            batch(args[1], args[3]);
         } else {
             extracted(args[0], args[1]);
         }
     }
 
 
-    private static void batch(String csvFilesDirStr) throws IOException {
+    private static void batch(String csvFilesDirStr, String outputFilesDirStr) throws IOException {
         Path csvFilesDir = Paths.get(csvFilesDirStr);
-        batch(csvFilesDir);
+        Path outputFilesDir = Paths.get(outputFilesDirStr);
+        batch(csvFilesDir, outputFilesDir);
     }
 
-    private static void batch(Path csvFilesDir) throws IOException {
+    private static void batch(Path csvFilesDir, Path outputFilesDir) throws IOException {
         if (! Files.exists(csvFilesDir)) {
-            throw new RuntimeException("does not exist");
+            throw new RuntimeException("csv files dir does not exist");
         }
         if (! Files.isDirectory(csvFilesDir)) {
-            throw new RuntimeException("not a directory");
+            throw new RuntimeException("csv files dir is not a directory");
+        }
+        Files.createDirectories(outputFilesDir);
+        if (! Files.exists(outputFilesDir)) {
+            throw new RuntimeException("output files dir does not exist");
+        }
+        if (! Files.isDirectory(outputFilesDir)) {
+            throw new RuntimeException("output files dir is not a directory");
         }
         Set<Path> csvFiles;
         try (Stream<Path> stream = Files.list(csvFilesDir)) {
             csvFiles = stream.filter(file -> !Files.isDirectory(file)).filter(file -> file.getFileName().toString().endsWith(".csv")).collect(Collectors.toSet());
         }
         for (Path file : csvFiles) {
-            Path outputFile = deriveOutputFileFrom(file);
+            Path outputFile = deriveOutputFileFrom(file, outputFilesDir);
             extracted(file, outputFile);
         }
     }
 
     private static Path deriveOutputFileFrom(Path file) {
+        return deriveOutputFileFrom(file, file.getParent());
+    }
+
+    private static Path deriveOutputFileFrom(Path file, Path dir) {
         String outputFileName = file.getFileName().toString().replace(".csv", ".html");
-        Path outputDir = file.getParent();
-        return outputDir.resolve(outputFileName);
+        return dir.resolve(outputFileName);
     }
 
     private static void extracted(String csvFileName, String outputFileName) throws IOException {
