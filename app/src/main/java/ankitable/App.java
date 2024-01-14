@@ -154,7 +154,7 @@ public class App {
             printWriter.println("<tr>\n");
             CSVRecord heading = records.get(0);
             for (int i = 0; i < numColumns; i++) {
-                printWriter.println("  <th>" + heading.get(i) + "</th>\n");
+                printWriter.println("  <th>" + escapeHtmlAndClozeDeletion(heading.get(i)) + "</th>\n");
             }
 
             int clozeNum = 1;
@@ -162,7 +162,7 @@ public class App {
             for (int i = 1; i < records.size(); i++) {
                 printWriter.println("<tr>\n");
                 for (int j = 0; j < numColumns; j++) {
-                    printWriter.println("  <td>{{c" + clozeNum++ + "::" + escapeClozeDeletion(records.get(i).get(j)) + "}}</td>\n");
+                    printWriter.println("  <td>{{c" + clozeNum++ + "::" + escapeHtmlAndClozeDeletion(records.get(i).get(j)) + "}}</td>\n");
                 }
                 printWriter.println("</tr>\n");
             }
@@ -171,11 +171,17 @@ public class App {
         System.out.println("wrote file: " + outputFile.toAbsolutePath());
     }
 
+    private static String escapeHtmlAndClozeDeletion(String s) {
+        return escapeHtml(escapeClozeDeletion(s));
+    }
+
+    private static String escapeHtml(String s) {
+        return s.replace("<", "&lt;")
+                .replace(">", "&gt;");
+    }
+
     private static String escapeClozeDeletion(String s) {
-        String s2 = s.replace("<", "&lt;");
-        String s3 = s2.replace(">", "&gt;");
-        String s4 = s3.replace("::", ":\u200B:");
-        return s4;
+        return s.replace("::", ":\u200B:");
     }
 
     private static OptionalInt numColumns(List<CSVRecord> records) {

@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 final class AppTest {
 
-    @TempDir(cleanup = CleanupMode.NEVER)
+    @TempDir(cleanup = CleanupMode.ON_SUCCESS) //NOTE: if you want to see the output files even when test passes, change CleanupMode
     private static Path tempDir;
 
     private static Path testResourcesPath;
@@ -46,11 +46,6 @@ final class AppTest {
     static void beforeAll() throws IOException {
         testResourcesPath = Paths.get(System.getProperty("test.resources"));
         actualOutputTempPath = Files.createTempFile(tempDir, "happy-output-actual", ".html");
-    }
-
-    @AfterAll
-    static void afterAll() throws IOException {
-//        Files.deleteIfExists(actualOutputTempPath);
     }
 
     @Test
@@ -63,7 +58,6 @@ final class AppTest {
         System.out.println(outputPathStr);
         App.main(new String [] {inputPathStr, outputPathStr});
 
-
         Document actualDoc = Jsoup.parse(actualOutputTempPath.toFile());
         io.github.ulfs.assertj.jsoup.Assertions.assertThat(actualDoc).elementExists("tr", 4);
         Elements rows = actualDoc.select("tr");
@@ -74,7 +68,7 @@ final class AppTest {
         assertThat(rows.get(3).select("td").size()).isEqualTo(3);
 
         assertThat(rows.get(0).select("th").get(0).text()).isEqualTo("HeadingA");
-        assertThat(rows.get(0).select("th").get(1).text()).isEqualTo("HeadingB");
+        assertThat(rows.get(0).select("th").get(1).html()).isEqualTo("Heading&lt;B&gt;");
         assertThat(rows.get(0).select("th").get(2).text()).isEqualTo("HeadingC");
 
         assertThat(rows.get(1).select("td").get(0).text()).isEqualTo("{{c1::data1a}}");
