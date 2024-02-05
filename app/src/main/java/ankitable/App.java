@@ -21,6 +21,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.csv.QuoteMode;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -105,11 +106,11 @@ public class App {
         }
     }
 
-    private static Path deriveOutputFileFrom(Path file) {
+    private static @NotNull Path deriveOutputFileFrom(Path file) {
         return deriveOutputFileFrom(file, file.getParent());
     }
 
-    private static Path deriveOutputFileFrom(Path file, Path dir) {
+    private static @NotNull Path deriveOutputFileFrom(@NotNull Path file, @NotNull Path dir) {
         String outputFileName = file.getFileName().toString().replace(".csv", ".html");
         return dir.resolve(outputFileName);
     }

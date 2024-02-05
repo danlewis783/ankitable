@@ -9,6 +9,7 @@ assertj = "3.23.1"
 commons-csv = "1.10.0"
 jsoup = "1.17.1"
 assertj-jsoup = "0.1.4"
+jetbrains-annotations = "20.1.0"
 
 [libraries]
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
@@ -18,3 +19,4 @@ assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 commons-csv = { module = "org.apache.commons:commons-csv", version.ref = "commons-csv" }
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 assertj-jsoup = { module = "io.github.ulfs:assertj-jsoup", version.ref = "assertj-jsoup" }
+jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrains-annotations" }
