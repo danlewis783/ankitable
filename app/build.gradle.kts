@@ -45,3 +45,7 @@ tasks.named<Test>("test") {
 tasks.named("processTestResources") {
     enabled = false
 }
+
+tasks.named<JavaCompile>("compileJava") {
+    options.encoding = "UTF-8"
+}

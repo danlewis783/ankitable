@@ -21,12 +21,14 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.csv.QuoteMode;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -38,8 +40,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class App {
+    private static final char COMMENT_MARKER = '#';
     private static final CSVFormat CSV_FORMAT = CSVFormat.DEFAULT.builder().setQuoteMode(QuoteMode.MINIMAL)
-            .setEscape('\\').setCommentMarker('#').setQuote('\"').setTrim(true).build();
+            .setEscape('\\').setCommentMarker(COMMENT_MARKER).setQuote('\"').setTrim(true).build();
 
     private static final String STYLE = "<style>\n" +
             "table.fred {\n" +
@@ -142,18 +145,28 @@ public class App {
     }
 
     private static void oneFile(Path csvFile, Path outputFile) throws IOException {
-        String title = deriveTitle(outputFile);
+        List<String> allLines = Files.readAllLines(csvFile);
+        String title = null;
+        if (!allLines.isEmpty()) {
+            String firstLine = allLines.get(0);
+            if (firstLine.startsWith(COMMENT_MARKER + "title=")) {
+                title = firstLine.substring(7).trim();
+            }
+        }
+        if (title == null) {
+            title = deriveTitle(outputFile);
+        }
+
         oneFile(csvFile, outputFile, title);
     }
 
-    private static String deriveTitle(Path outputFile) {
+    private static @NotNull String deriveTitle(Path outputFile) {
         return fileNameWithoutExtension(outputFile);
     }
 
-    private static String fileNameWithoutExtension(Path outputFile) {
+    private static @NotNull String fileNameWithoutExtension(@NotNull Path outputFile) {
         String fileName = outputFile.getFileName().toString();
-        String noExtension = fileName.substring(0, fileName.indexOf(".html"));
-        return noExtension;
+        return fileName.substring(0, fileName.indexOf(".html"));
     }
 
     private static void oneFile(Path csvFile, Path outputFile, String title) throws IOException {
@@ -166,7 +179,7 @@ public class App {
 
         int numColumns = numColumns(records).orElseThrow(() -> new IllegalArgumentException("inconsistent number of columns for file " + csvFile));
 
-        try (BufferedWriter writer = Files.newBufferedWriter(outputFile);
+        try (BufferedWriter writer = Files.newBufferedWriter(outputFile, StandardCharsets.UTF_8);
              PrintWriter printWriter = new PrintWriter(writer)) {
 
             printWriter.println(STYLE);
@@ -175,7 +188,7 @@ public class App {
             printWriter.println("<tr>\n");
             CSVRecord heading = records.get(0);
             for (int i = 0; i < numColumns; i++) {
-                printWriter.println("  <th>" + escapeHtmlAndClozeDeletion(heading.get(i)) + "</th>\n");
+                printWriter.println("  <th>" + escapeHtml(escapeClozeDeletion(unwrapDoubleQuotes(heading.get(i)))) + "</th>\n");
             }
 
             int clozeNum = 1;
@@ -183,7 +196,16 @@ public class App {
             for (int i = 1; i < records.size(); i++) {
                 printWriter.println("<tr>\n");
                 for (int j = 0; j < numColumns; j++) {
-                    printWriter.println("  <td>{{c" + clozeNum++ + "::" + escapeHtmlAndClozeDeletion(records.get(i).get(j)) + "}}</td>\n");
+                    String cellValue = records.get(i).get(j);
+                    if (cellValue.startsWith("\u00BF")) {   // "¿"
+//                        clozeNum++;
+                        String cellValueAfterFirstChar = cellValue.substring(1);
+                        printWriter.println("  <td>" + escapeHtml(cellValueAfterFirstChar) + "</td>\n");
+                    } else {
+                        String s = unwrapDoubleQuotes(cellValue);
+                        String foo = interpretSpecialMarkupToBreakLines(escapeHtml(escapeClozeDeletion(unwrapDoubleQuotes(s))));
+                        printWriter.println("  <td>{{c" + clozeNum++ + "::" + foo + "}}</td>\n");
+                    }
                 }
                 printWriter.println("</tr>\n");
             }
@@ -192,28 +214,44 @@ public class App {
         System.out.println("wrote file: " + outputFile.toAbsolutePath());
     }
 
-    private static String escapeHtmlAndClozeDeletion(String s) {
-        return escapeHtml(escapeClozeDeletion(s));
+    static @NotNull String interpretSpecialMarkupToBreakLines(@NotNull String str) {
+        if (str.contains("\u00c2\u00a1")) {
+            return str.replace("\u00c2\u00a1", "<br />");
+        } else if (str.contains("\u00a1")) {
+            return str.replace("\u00a1", "<br />");
+        }
+        return str;
     }
 
-    private static String escapeHtml(String s) {
+    static @NotNull String unwrapDoubleQuotes(@NotNull String s) {
+        if (s.startsWith("\"") && s.endsWith("\"")) {
+            return s.substring(1, s.length() - 1);
+        }
+        return s;
+    }
+
+    private static @NotNull String escapeHtml(@NotNull String s) {
         return s.replace("<", "&lt;")
                 .replace(">", "&gt;");
     }
 
-    private static String escapeClozeDeletion(String s) {
+    @Contract(pure = true)
+    private static @NotNull String escapeClozeDeletion(@NotNull String s) {
         return s.replace("::", ":\u200B:");
     }
 
-    private static OptionalInt numColumns(List<CSVRecord> records) {
+    private static OptionalInt numColumns(@NotNull List<CSVRecord> records) {
         int toReturn = -1;
+        int lineNum = 0;
         for (CSVRecord csvRecord : records) {
+            lineNum++;
             int currentRecordSize = csvRecord.size();
             if (toReturn == -1) {
                 toReturn = currentRecordSize;
                 continue;
             }
             if (currentRecordSize != toReturn) {
+                System.out.println("at line " + lineNum + ": currentRecordSize " + currentRecordSize + " does not match " + toReturn);
                 return OptionalInt.empty();
             }
         }

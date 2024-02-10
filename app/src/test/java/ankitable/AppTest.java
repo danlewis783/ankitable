@@ -19,6 +19,7 @@ package ankitable;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -32,6 +33,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 
 final class AppTest {
@@ -58,7 +60,7 @@ final class AppTest {
         System.out.println(outputPathStr);
         App.main("-file", inputPathStr, outputPathStr);
 
-        Document actualDoc = Jsoup.parse(actualOutputTempPath.toFile());
+        Document actualDoc = Jsoup.parse(actualOutputTempPath.toFile(), "UTF-8");
         io.github.ulfs.assertj.jsoup.Assertions.assertThat(actualDoc).elementExists("tr", 4);
         Elements rows = actualDoc.select("tr");
         assertThat(rows.size()).isEqualTo(4);
@@ -73,14 +75,33 @@ final class AppTest {
 
         assertThat(rows.get(1).select("td").get(0).text()).isEqualTo("{{c1::data1a}}");
         assertThat(rows.get(1).select("td").get(1).text()).isEqualTo("{{c2::data1b}}");
-        assertThat(rows.get(1).select("td").get(2).text()).isEqualTo("{{c3::data1c}}");
+        assertThat(unFrack(rows.get(1).select("td").get(2).html())).isEqualTo("{{c3::data1c-1<br />data1c-2}}");
 
-        assertThat(rows.get(2).select("td").get(0).text()).isEqualTo("{{c4::data2a}}");
+        assertThat(unFrack(rows.get(2).select("td").get(0).html())).isEqualTo("{{c4::data2a-1<br />data2a-2<br />data2a-3}}");
         assertThat(rows.get(2).select("td").get(1).text()).isEqualTo("{{c5::data2b}}");
         assertThat(rows.get(2).select("td").get(2).html()).isEqualTo("{{c6::data2c:\u200B:foo}}");
 
         assertThat(rows.get(3).select("td").get(0).text()).isEqualTo("{{c7::data3a}}");
-        assertThat(rows.get(3).select("td").get(1).text()).isEqualTo("{{c8::data3b}}");
+        assertThat(rows.get(3).select("td").get(1).text()).isEqualTo("data3b");
         assertThat(rows.get(3).select("td").get(2).text()).isEqualTo("{{c9::data3c}}");
+    }
+
+    @Test
+    void interpretSpecialMarkupToBreakLines() {
+        assertThat(App.interpretSpecialMarkupToBreakLines("¡")).isEqualTo("<br />");
+        assertThat(App.interpretSpecialMarkupToBreakLines("\u00A1")).isEqualTo("<br />");
+        assertThat(App.interpretSpecialMarkupToBreakLines("")).isEqualTo("");
+    }
+
+    private static String unFrack(String str) {
+        return str.replace("<br>\n", "<br />");
+    }
+
+    @Test
+    void unwrapDoubleQuotes() {
+        assertThat(App.unwrapDoubleQuotes("\"foo\"")).isEqualTo("foo");
+        assertThat(App.unwrapDoubleQuotes("\"bar")).isEqualTo("\"bar");
+        assertThat(App.unwrapDoubleQuotes("")).isEqualTo("");
+        assertThatNullPointerException().isThrownBy(() -> App.unwrapDoubleQuotes(null));
     }
 }
