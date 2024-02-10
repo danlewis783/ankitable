@@ -60,26 +60,44 @@ public class App {
 
 
     public static void main(String[] args) throws IOException {
-        if (args.length < 2) {
-            System.err.println(
-                    "usage: AnkiTable path/to/file.csv path/to/outputFile.html\n" +
-                    "                --OR--\n" +
-                    "       AnkiTable -batch directory/containing/csvfiles -output directory/to/save/html/files");
-            return;
-        }
-        System.out.println(Arrays.toString(args));
-        if (args[0].equals("-batch")) {
-            batch(args[1], args[3]);
+        if (args.length == 4) {
+            if (args[0].equals("-batch")) {
+                batch(args[1], args[3]);
+            } else if (args[0].equals("-file")) {
+                oneFile(args[1], args[3]);
+            } else {
+                printUsage(args);
+            }
+        } else if (args.length == 0) {
+            batch();
         } else {
-            extracted(args[0], args[1]);
+            printUsage(args);
         }
     }
 
+    private static void printUsage(String[] args) {
+        System.out.println("received args: " + Arrays.toString(args));
+        System.err.println(
+                "usage: " +
+                "       AnkiTable\n" +
+                "                --OR--\n" +
+                "       AnkiTable -batch directory/containing/csvfiles -output directory/to/save/html/files" +
+                "                --OR--\n" +
+                "       AnkiTable -file path/to/file.csv -file path/to/outputFile.html");
+    }
+
+    private static void batch() throws IOException {
+        // Use $home/anki-flashcards as the default directory to read .csv files and generate .html files.
+        // Create the $home/anki-flashcards directory if it does not exist.
+        String userHomeProperty = System.getProperty("user.home");
+        String defaultAnkiFlashcardsDirectory = "anki-flashcards";
+        Path defaultWorkingDir = Paths.get(userHomeProperty, defaultAnkiFlashcardsDirectory);
+        Path defaultWorkingDirCreated = Files.createDirectories(defaultWorkingDir);
+        batch(defaultWorkingDirCreated, defaultWorkingDirCreated);
+    }
 
     private static void batch(String csvFilesDirStr, String outputFilesDirStr) throws IOException {
-        Path csvFilesDir = Paths.get(csvFilesDirStr);
-        Path outputFilesDir = Paths.get(outputFilesDirStr);
-        batch(csvFilesDir, outputFilesDir);
+        batch(Paths.get(csvFilesDirStr), Paths.get(outputFilesDirStr));
     }
 
     private static void batch(Path csvFilesDir, Path outputFilesDir) throws IOException {
@@ -98,11 +116,13 @@ public class App {
         }
         Set<Path> csvFiles;
         try (Stream<Path> stream = Files.list(csvFilesDir)) {
-            csvFiles = stream.filter(file -> !Files.isDirectory(file)).filter(file -> file.getFileName().toString().endsWith(".csv")).collect(Collectors.toSet());
+            csvFiles = stream.filter(file -> !Files.isDirectory(file))
+                    .filter(file -> file.getFileName().toString().endsWith(".csv"))
+                    .collect(Collectors.toSet());
         }
         for (Path file : csvFiles) {
             Path outputFile = deriveOutputFileFrom(file, outputFilesDir);
-            extracted(file, outputFile);
+            oneFile(file, outputFile);
         }
     }
 
@@ -115,15 +135,15 @@ public class App {
         return dir.resolve(outputFileName);
     }
 
-    private static void extracted(String csvFileName, String outputFileName) throws IOException {
+    private static void oneFile(String csvFileName, String outputFileName) throws IOException {
         Path csvFile = Paths.get(csvFileName);
         Path outputFile = Paths.get(outputFileName);
-        extracted(csvFile, outputFile);
+        oneFile(csvFile, outputFile);
     }
 
-    private static void extracted(Path csvFile, Path outputFile) throws IOException {
+    private static void oneFile(Path csvFile, Path outputFile) throws IOException {
         String title = deriveTitle(outputFile);
-        extracted(csvFile, outputFile, title);
+        oneFile(csvFile, outputFile, title);
     }
 
     private static String deriveTitle(Path outputFile) {
@@ -136,7 +156,7 @@ public class App {
         return noExtension;
     }
 
-    private static void extracted(Path csvFile, Path outputFile, String title) throws IOException {
+    private static void oneFile(Path csvFile, Path outputFile, String title) throws IOException {
         System.out.println("csvFile = " + csvFile + ", outputFile = " + outputFile + ", title = " + title);
         List<CSVRecord> records;
         try (BufferedReader reader = Files.newBufferedReader(csvFile)) {
