@@ -56,7 +56,7 @@ final class AppTest {
         String outputPathStr = actualOutputTempPath.toAbsolutePath().toString();
         System.out.println(inputPathStr);
         System.out.println(outputPathStr);
-        App.main(new String [] {inputPathStr, outputPathStr});
+        App.main("-file", inputPathStr, outputPathStr);
 
         Document actualDoc = Jsoup.parse(actualOutputTempPath.toFile());
         io.github.ulfs.assertj.jsoup.Assertions.assertThat(actualDoc).elementExists("tr", 4);

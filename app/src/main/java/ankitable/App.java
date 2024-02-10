@@ -59,12 +59,12 @@ public class App {
             "</style>\n";
 
 
-    public static void main(String[] args) throws IOException {
-        if (args.length == 4) {
+    public static void main(String... args) throws IOException {
+        if (args.length == 3) {
             if (args[0].equals("-batch")) {
-                batch(args[1], args[3]);
+                batch(args[1], args[2]);
             } else if (args[0].equals("-file")) {
-                oneFile(args[1], args[3]);
+                oneFile(args[1], args[2]);
             } else {
                 printUsage(args);
             }
