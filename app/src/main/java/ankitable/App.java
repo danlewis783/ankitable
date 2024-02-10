@@ -81,9 +81,9 @@ public class App {
                 "usage: " +
                 "       AnkiTable\n" +
                 "                --OR--\n" +
-                "       AnkiTable -batch directory/containing/csvfiles -output directory/to/save/html/files" +
+                "       AnkiTable -batch directory/containing/csvfiles directory/to/save/html/files" +
                 "                --OR--\n" +
-                "       AnkiTable -file path/to/file.csv -file path/to/outputFile.html");
+                "       AnkiTable -file path/to/file.csv path/to/outputFile.html");
     }
 
     private static void batch() throws IOException {
