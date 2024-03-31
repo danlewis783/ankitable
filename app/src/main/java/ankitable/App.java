@@ -129,10 +129,6 @@ public class App {
         }
     }
 
-    private static @NotNull Path deriveOutputFileFrom(Path file) {
-        return deriveOutputFileFrom(file, file.getParent());
-    }
-
     private static @NotNull Path deriveOutputFileFrom(@NotNull Path file, @NotNull Path dir) {
         String outputFileName = file.getFileName().toString().replace(".csv", ".html");
         return dir.resolve(outputFileName);
@@ -149,8 +145,9 @@ public class App {
         String title = null;
         if (!allLines.isEmpty()) {
             String firstLine = allLines.get(0);
-            if (firstLine.startsWith(COMMENT_MARKER + "title=")) {
-                title = firstLine.substring(7).trim();
+            String prefix = COMMENT_MARKER + "title=";
+            if (firstLine.startsWith(prefix)) {
+                title = firstLine.substring(prefix.length()).trim();
             }
         }
         if (title == null) {
