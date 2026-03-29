@@ -1,11 +1,21 @@
 # Ignore Gradle project-specific cache directory
-.gradle
+.gradle/
+
+# Do not ignore gradle wrapper jar file
+!/gradle/wrapper/gradle-wrapper.jar
 
 # Ignore Gradle build output directory
-build
+build/
 
 # IntelliJ IDEA
-.idea
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# Ignore Kotlin plugin data
+.kotlin/
 
 # Entire data directory
 data
