@@ -83,7 +83,7 @@ final class AppTest {
 
         assertThat(rows.get(3).select("td").get(0).text()).isEqualTo("{{c7::data3a}}");
         assertThat(rows.get(3).select("td").get(1).text()).isEqualTo("data3b");
-        assertThat(rows.get(3).select("td").get(2).text()).isEqualTo("{{c9::data3c}}");
+        assertThat(rows.get(3).select("td").get(2).text()).isEqualTo("{{c8::data3c}}");
     }
 
     @Test

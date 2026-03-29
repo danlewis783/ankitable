@@ -40,6 +40,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class App {
+    /**
+     * Marker used for comments and special metadata in the .csv file.
+     * For example, the first line can be: #title=My Table Title
+     */
     private static final char COMMENT_MARKER = '#';
     private static final CSVFormat CSV_FORMAT = CSVFormat.DEFAULT.builder().setQuoteMode(QuoteMode.MINIMAL)
             .setEscape('\\').setCommentMarker(COMMENT_MARKER).setQuote('\"').setTrim(true).build();
@@ -194,8 +198,8 @@ public class App {
                 printWriter.println("<tr>\n");
                 for (int j = 0; j < numColumns; j++) {
                     String cellValue = records.get(i).get(j);
+                    // A cell value starting with "¿" (U+00BF) is not wrapped in an Anki cloze deletion.
                     if (cellValue.startsWith("\u00BF")) {   // "¿"
-//                        clozeNum++;
                         String cellValueAfterFirstChar = cellValue.substring(1);
                         printWriter.println("  <td>" + escapeHtml(cellValueAfterFirstChar) + "</td>\n");
                     } else {
@@ -211,6 +215,20 @@ public class App {
         System.out.println("wrote file: " + outputFile.toAbsolutePath());
     }
 
+    /**
+     * Interprets "¡" (U+00A1) and its UTF-8 sequence as line breaks ("<br />").
+     *
+     * <p>This method handles two forms of the inverted exclamation mark:
+     * <ul>
+     *   <li>{@code \u00a1} (¡) - The actual Unicode character.</li>
+     *   <li>{@code \u00c2\u00a1} - The UTF-8 sequence of ¡ (0xC2 0xA1) when misinterpreted
+     *       as Latin-1 or Windows-1252 (mojibake). This is common when CSV files are
+     *       saved in UTF-8 but read using an older encoding.</li>
+     * </ul>
+     *
+     * @param str The string to process.
+     * @return The string with line breaks.
+     */
     static @NotNull String interpretSpecialMarkupToBreakLines(@NotNull String str) {
         if (str.contains("\u00c2\u00a1")) {
             return str.replace("\u00c2\u00a1", "<br />");
@@ -220,6 +238,11 @@ public class App {
         return str;
     }
 
+    /**
+     * Unwraps a string if it is enclosed in double quotes.
+     * @param s The string to unwrap.
+     * @return The unwrapped string.
+     */
     static @NotNull String unwrapDoubleQuotes(@NotNull String s) {
         if (s.startsWith("\"") && s.endsWith("\"")) {
             return s.substring(1, s.length() - 1);
@@ -227,12 +250,22 @@ public class App {
         return s;
     }
 
+    /**
+     * Escapes HTML special characters: '<' and '>'.
+     * @param s The string to escape.
+     * @return The escaped string.
+     */
     private static @NotNull String escapeHtml(@NotNull String s) {
         return s.replace("<", "&lt;")
                 .replace(">", "&gt;");
     }
 
-    @Contract(pure = true)
+    /**
+     * Escapes "::" by inserting a zero-width space between the colons.
+     * This prevents it from being misinterpreted as the end of an Anki cloze deletion.
+     * @param s The string to escape.
+     * @return The escaped string.
+     */
     private static @NotNull String escapeClozeDeletion(@NotNull String s) {
         return s.replace("::", ":\u200B:");
     }
