@@ -11,16 +11,20 @@ repositories {
 dependencies {
     compileOnly(libs.jetbrains.annotations)
 
-    testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.junit.jupiter)
-
     testImplementation(libs.assertj)
     testImplementation(libs.assertj.jsoup)
     testImplementation(libs.jsoup)
 
-    testRuntimeOnly(libs.junit.platform.launcher)
-
     implementation(libs.commons.csv)
+}
+
+testing {
+    suites {
+        // Configure the built-in test suite
+        named<JvmTestSuite>("test") {
+            useJUnitJupiter(libs.versions.junit.jupiter.get())
+        }
+    }
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
@@ -36,7 +40,6 @@ application {
 }
 
 tasks.named<Test>("test") {
-    useJUnitPlatform()
     systemProperty("test.resources", "$projectDir/src/test/resources")
 }
 

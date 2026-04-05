@@ -1,19 +1,17 @@
 # https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
 
 [versions]
-guava = "32.1.2-jre"
+guava = "33.5.0-jre"
 junit = "5.11.4"
-assertj = "3.23.1"
-commons-csv = "1.10.0"
-jsoup = "1.17.1"
+assertj = "3.27.7"
+commons-csv = "1.14.0"
+jsoup = "1.22.1"
 assertj-jsoup = "0.1.4"
-jetbrains-annotations = "20.1.0"
+jetbrains-annotations = "26.0.2"
+junit-jupiter = "5.11.4"
 
 [libraries]
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
-junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
-junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
-junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 commons-csv = { module = "org.apache.commons:commons-csv", version.ref = "commons-csv" }
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
